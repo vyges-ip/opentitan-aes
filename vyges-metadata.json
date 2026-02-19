@@ -6,6 +6,8 @@
     "type": "git",
     "url": "https://github.com/lowRISC/opentitan",
     "commit": "304378684dfcf5be73bbd14faffa71790793d8c6",
+    "ip_path": "hw/ip/aes",
+    "private": false,
     "rtl_path": "rtl",
     "rtl_files": [
       "rtl/aes.sv",
@@ -50,5 +52,50 @@
       "rtl/aes_wrap.sv"
     ]
   },
-  "updated": "2026-02-19T06:03:45Z"
+  "updated": "2026-02-19T06:12:02Z",
+  "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
+  "x-version": "1.0.0",
+  "description": "Aes. OpenTitan IP block from hw/ip/aes.",
+  "template": "opentitan-ip-template@1.0.0",
+  "target": [
+    "fpga",
+    "asic"
+  ],
+  "design_type": [
+    "digital"
+  ],
+  "maturity": "imported",
+  "created": "2026-02-19T06:12:02Z",
+  "interfaces": [
+    {
+      "type": "bus",
+      "direction": "input",
+      "protocol": "TL-UL",
+      "width": 32,
+      "description": "TL-UL host interface for register access"
+    },
+    {
+      "type": "bus",
+      "direction": "output",
+      "protocol": "Block cipher",
+      "description": "AES encryption/decryption data interface"
+    }
+  ],
+  "categories": {
+    "primary": "crypto",
+    "secondary": [
+      "encryption",
+      "aes"
+    ],
+    "tags": [
+      "encryption",
+      "aes",
+      "opentitan",
+      "lowrisc-opentitan"
+    ]
+  },
+  "community": {
+    "issues": "https://github.com/vyges-ip/opentitan-aes/issues",
+    "contributions": "https://github.com/vyges-ip/opentitan-aes/pulls"
+  }
 }
