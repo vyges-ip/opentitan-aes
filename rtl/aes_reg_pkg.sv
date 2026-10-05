@@ -100,6 +100,9 @@ package aes_reg_pkg;
   typedef struct packed {
     struct packed {
       logic        q;
+    } keep_start_trigger_high;
+    struct packed {
+      logic        q;
     } force_masks;
     struct packed {
       logic        q;
@@ -252,14 +255,14 @@ package aes_reg_pkg;
 
   // Register -> HW type
   typedef struct packed {
-    aes_reg2hw_alert_test_reg_t alert_test; // [972:969]
-    aes_reg2hw_key_share0_mreg_t [7:0] key_share0; // [968:705]
-    aes_reg2hw_key_share1_mreg_t [7:0] key_share1; // [704:441]
-    aes_reg2hw_iv_mreg_t [3:0] iv; // [440:309]
-    aes_reg2hw_data_in_mreg_t [3:0] data_in; // [308:177]
-    aes_reg2hw_data_out_mreg_t [3:0] data_out; // [176:45]
-    aes_reg2hw_ctrl_shadowed_reg_t ctrl_shadowed; // [44:23]
-    aes_reg2hw_ctrl_aux_shadowed_reg_t ctrl_aux_shadowed; // [22:21]
+    aes_reg2hw_alert_test_reg_t alert_test; // [973:970]
+    aes_reg2hw_key_share0_mreg_t [7:0] key_share0; // [969:706]
+    aes_reg2hw_key_share1_mreg_t [7:0] key_share1; // [705:442]
+    aes_reg2hw_iv_mreg_t [3:0] iv; // [441:310]
+    aes_reg2hw_data_in_mreg_t [3:0] data_in; // [309:178]
+    aes_reg2hw_data_out_mreg_t [3:0] data_out; // [177:46]
+    aes_reg2hw_ctrl_shadowed_reg_t ctrl_shadowed; // [45:24]
+    aes_reg2hw_ctrl_aux_shadowed_reg_t ctrl_aux_shadowed; // [23:21]
     aes_reg2hw_trigger_reg_t trigger; // [20:17]
     aes_reg2hw_status_reg_t status; // [16:13]
     aes_reg2hw_ctrl_gcm_shadowed_reg_t ctrl_gcm_shadowed; // [12:0]
@@ -316,9 +319,10 @@ package aes_reg_pkg;
   parameter logic [BlockAw-1:0] AES_CTRL_GCM_SHADOWED_OFFSET = 8'h 88;
 
   // Reset values for hwext registers and their fields
-  parameter logic [1:0] AES_ALERT_TEST_RESVAL = 2'h 0;
+  parameter logic [31:0] AES_ALERT_TEST_RESVAL = 32'h 80000000;
   parameter logic [0:0] AES_ALERT_TEST_RECOV_CTRL_UPDATE_ERR_RESVAL = 1'h 0;
   parameter logic [0:0] AES_ALERT_TEST_FATAL_FAULT_RESVAL = 1'h 0;
+  parameter logic [0:0] AES_ALERT_TEST_REGWEN_RESVAL = 1'h 1;
   parameter logic [31:0] AES_KEY_SHARE0_0_RESVAL = 32'h 0;
   parameter logic [31:0] AES_KEY_SHARE0_0_KEY_SHARE0_0_RESVAL = 32'h 0;
   parameter logic [31:0] AES_KEY_SHARE0_1_RESVAL = 32'h 0;
@@ -419,7 +423,7 @@ package aes_reg_pkg;
 
   // Register width information to check illegal writes
   parameter logic [3:0] AES_PERMIT [35] = '{
-    4'b 0001, // index[ 0] AES_ALERT_TEST
+    4'b 1111, // index[ 0] AES_ALERT_TEST
     4'b 1111, // index[ 1] AES_KEY_SHARE0_0
     4'b 1111, // index[ 2] AES_KEY_SHARE0_1
     4'b 1111, // index[ 3] AES_KEY_SHARE0_2

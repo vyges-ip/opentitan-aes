@@ -128,6 +128,8 @@ module aes_reg_top (
   logic alert_test_we;
   logic alert_test_recov_ctrl_update_err_wd;
   logic alert_test_fatal_fault_wd;
+  logic alert_test_regwen_qs;
+  logic alert_test_regwen_wd;
   logic key_share0_0_we;
   logic [31:0] key_share0_0_wd;
   logic key_share0_1_we;
@@ -216,6 +218,10 @@ module aes_reg_top (
   logic ctrl_aux_shadowed_force_masks_wd;
   logic ctrl_aux_shadowed_force_masks_storage_err;
   logic ctrl_aux_shadowed_force_masks_update_err;
+  logic ctrl_aux_shadowed_keep_start_trigger_high_qs;
+  logic ctrl_aux_shadowed_keep_start_trigger_high_wd;
+  logic ctrl_aux_shadowed_keep_start_trigger_high_storage_err;
+  logic ctrl_aux_shadowed_keep_start_trigger_high_update_err;
   logic ctrl_aux_regwen_we;
   logic ctrl_aux_regwen_qs;
   logic ctrl_aux_regwen_wd;
@@ -241,14 +247,17 @@ module aes_reg_top (
   // Register instances
   // R[alert_test]: V(True)
   logic alert_test_qe;
-  logic [1:0] alert_test_flds_we;
+  logic [2:0] alert_test_flds_we;
   assign alert_test_qe = &alert_test_flds_we;
+  // Create REGWEN-gated WE signal
+  logic alert_test_gated_we;
+  assign alert_test_gated_we = alert_test_we && alert_test_regwen_qs;
   //   F[recov_ctrl_update_err]: 0:0
   prim_subreg_ext #(
     .DW    (1)
   ) u_alert_test_recov_ctrl_update_err (
     .re     (1'b0),
-    .we     (alert_test_we),
+    .we     (alert_test_gated_we),
     .wd     (alert_test_recov_ctrl_update_err_wd),
     .d      ('0),
     .qre    (),
@@ -264,7 +273,7 @@ module aes_reg_top (
     .DW    (1)
   ) u_alert_test_fatal_fault (
     .re     (1'b0),
-    .we     (alert_test_we),
+    .we     (alert_test_gated_we),
     .wd     (alert_test_fatal_fault_wd),
     .d      ('0),
     .qre    (),
@@ -274,6 +283,34 @@ module aes_reg_top (
     .qs     ()
   );
   assign reg2hw.alert_test.fatal_fault.qe = alert_test_qe;
+
+  //   F[regwen]: 31:31
+  prim_subreg #(
+    .DW      (1),
+    .SwAccess(prim_subreg_pkg::SwAccessW0C),
+    .RESVAL  (1'h1),
+    .Mubi    (1'b0)
+  ) u_alert_test_regwen (
+    .clk_i   (clk_i),
+    .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
+
+    // from register interface
+    .we     (alert_test_we),
+    .wd     (alert_test_regwen_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0),
+
+    // to internal hardware
+    .qe     (alert_test_flds_we[2]),
+    .q      (),
+    .ds     (),
+
+    // to register interface (read)
+    .qs     (alert_test_regwen_qs)
+  );
 
 
   // Subregister 0 of Multireg key_share0
@@ -717,6 +754,7 @@ module aes_reg_top (
   ) u_data_in_0 (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (data_in_0_we),
@@ -758,6 +796,7 @@ module aes_reg_top (
   ) u_data_in_1 (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (data_in_1_we),
@@ -799,6 +838,7 @@ module aes_reg_top (
   ) u_data_in_2 (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (data_in_2_we),
@@ -840,6 +880,7 @@ module aes_reg_top (
   ) u_data_in_3 (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (data_in_3_we),
@@ -1105,6 +1146,42 @@ module aes_reg_top (
     .err_storage (ctrl_aux_shadowed_force_masks_storage_err)
   );
 
+  //   F[keep_start_trigger_high]: 2:2
+  prim_subreg_shadow #(
+    .DW      (1),
+    .SwAccess(prim_subreg_pkg::SwAccessRW),
+    .RESVAL  (1'h0),
+    .Mubi    (1'b0)
+  ) u_ctrl_aux_shadowed_keep_start_trigger_high (
+    .clk_i   (clk_i),
+    .rst_ni  (rst_ni),
+    .rst_shadowed_ni (rst_shadowed_ni),
+
+    // from register interface
+    .re     (ctrl_aux_shadowed_re),
+    .we     (ctrl_aux_shadowed_gated_we),
+    .wd     (ctrl_aux_shadowed_keep_start_trigger_high_wd),
+
+    // from internal hardware
+    .de     (1'b0),
+    .d      ('0),
+
+    // to internal hardware
+    .qe     (),
+    .q      (reg2hw.ctrl_aux_shadowed.keep_start_trigger_high.q),
+    .ds     (),
+
+    // to register interface (read)
+    .qs     (ctrl_aux_shadowed_keep_start_trigger_high_qs),
+
+    // Shadow register phase. Relevant for hwext only.
+    .phase  (),
+
+    // Shadow register error conditions
+    .err_update  (ctrl_aux_shadowed_keep_start_trigger_high_update_err),
+    .err_storage (ctrl_aux_shadowed_keep_start_trigger_high_storage_err)
+  );
+
 
   // R[ctrl_aux_regwen]: V(False)
   prim_subreg #(
@@ -1115,6 +1192,7 @@ module aes_reg_top (
   ) u_ctrl_aux_regwen (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (ctrl_aux_regwen_we),
@@ -1144,6 +1222,7 @@ module aes_reg_top (
   ) u_trigger_start (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (trigger_we),
@@ -1171,6 +1250,7 @@ module aes_reg_top (
   ) u_trigger_key_iv_data_in_clear (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (trigger_we),
@@ -1198,6 +1278,7 @@ module aes_reg_top (
   ) u_trigger_data_out_clear (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (trigger_we),
@@ -1225,6 +1306,7 @@ module aes_reg_top (
   ) u_trigger_prng_reseed (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (trigger_we),
@@ -1254,6 +1336,7 @@ module aes_reg_top (
   ) u_status_idle (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1281,6 +1364,7 @@ module aes_reg_top (
   ) u_status_stall (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1308,6 +1392,7 @@ module aes_reg_top (
   ) u_status_output_lost (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1335,6 +1420,7 @@ module aes_reg_top (
   ) u_status_output_valid (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1362,6 +1448,7 @@ module aes_reg_top (
   ) u_status_input_ready (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1389,6 +1476,7 @@ module aes_reg_top (
   ) u_status_alert_recov_ctrl_update_err (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1416,6 +1504,7 @@ module aes_reg_top (
   ) u_status_alert_fatal_fault (
     .clk_i   (clk_i),
     .rst_ni  (rst_ni),
+    .reinit_i(1'b0),
 
     // from register interface
     .we     (1'b0),
@@ -1560,6 +1649,8 @@ module aes_reg_top (
   assign alert_test_recov_ctrl_update_err_wd = reg_wdata[0];
 
   assign alert_test_fatal_fault_wd = reg_wdata[1];
+
+  assign alert_test_regwen_wd = reg_wdata[31];
   assign key_share0_0_we = addr_hit[1] & reg_we & !reg_error;
 
   assign key_share0_0_wd = reg_wdata[31:0];
@@ -1660,6 +1751,8 @@ module aes_reg_top (
   assign ctrl_aux_shadowed_key_touch_forces_reseed_wd = reg_wdata[0];
 
   assign ctrl_aux_shadowed_force_masks_wd = reg_wdata[1];
+
+  assign ctrl_aux_shadowed_keep_start_trigger_high_wd = reg_wdata[2];
   assign ctrl_aux_regwen_we = addr_hit[31] & reg_we & !reg_error;
 
   assign ctrl_aux_regwen_wd = reg_wdata[0];
@@ -1725,6 +1818,7 @@ module aes_reg_top (
       addr_hit[0]: begin
         reg_rdata_next[0] = '0;
         reg_rdata_next[1] = '0;
+        reg_rdata_next[31] = alert_test_regwen_qs;
       end
 
       addr_hit[1]: begin
@@ -1851,6 +1945,7 @@ module aes_reg_top (
       addr_hit[30]: begin
         reg_rdata_next[0] = ctrl_aux_shadowed_key_touch_forces_reseed_qs;
         reg_rdata_next[1] = ctrl_aux_shadowed_force_masks_qs;
+        reg_rdata_next[2] = ctrl_aux_shadowed_keep_start_trigger_high_qs;
       end
 
       addr_hit[31]: begin
@@ -1911,11 +2006,13 @@ module aes_reg_top (
   // Collect up storage and update errors
   assign shadowed_storage_err_o = |{
     ctrl_aux_shadowed_key_touch_forces_reseed_storage_err,
-    ctrl_aux_shadowed_force_masks_storage_err
+    ctrl_aux_shadowed_force_masks_storage_err,
+    ctrl_aux_shadowed_keep_start_trigger_high_storage_err
   };
   assign shadowed_update_err_o = |{
     ctrl_aux_shadowed_key_touch_forces_reseed_update_err,
-    ctrl_aux_shadowed_force_masks_update_err
+    ctrl_aux_shadowed_force_masks_update_err,
+    ctrl_aux_shadowed_keep_start_trigger_high_update_err
   };
 
   // register busy
